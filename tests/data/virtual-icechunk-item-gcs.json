@@ -78,7 +78,7 @@
           "long_name": "2 metre temperature",
           "short_name": "t2m"
         },
-        "shape": [93544, 721, 1440],
+        "shape": [100, 721, 1440],
         "chunks": [1, 721, 1440]
       },
       "10m_u_component_of_wind": {
@@ -91,7 +91,7 @@
           "long_name": "10 metre U wind component",
           "short_name": "u10"
         },
-        "shape": [93544, 721, 1440],
+        "shape": [100, 721, 1440],
         "chunks": [1, 721, 1440]
       }
     },
@@ -100,7 +100,7 @@
   "links": [],
   "assets": {
     "weatherbench2-era5-1x721x1440": {
-      "href": "gs://xpystac-test-data-icechunk/test-fixtures/weatherbench2-mock/",
+      "href": "gs://xpystac-test-data-icechunk/test-fixtures/weatherbench2-mock-v1/",
       "type": "application/vnd.zarr+icechunk",
       "title": "Weatherbench2 ERA5 Icechunk Store",
       "zarr:consolidated": false,
