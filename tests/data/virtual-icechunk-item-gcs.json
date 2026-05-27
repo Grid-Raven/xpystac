@@ -100,7 +100,7 @@
   "links": [],
   "assets": {
     "weatherbench2-era5-1x721x1440": {
-      "href": "gs://xpystac-test-data-icechunk/test-fixtures/weatherbench2-mock-v1/",
+      "href": "gs://xpystac-test-data-icechunk/test-fixtures/weatherbench2-mock-v2/",
       "type": "application/vnd.zarr+icechunk",
       "title": "Weatherbench2 ERA5 Icechunk Store",
       "zarr:consolidated": false,
