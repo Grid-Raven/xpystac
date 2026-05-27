@@ -74,21 +74,29 @@ def read_icechunk(asset: pystac.Asset) -> xr.Dataset:
         raise ValueError("Only supports one storage:ref per asset")
 
     storage_scheme = storage_schemes.get(storage_refs[0])
-    if not storage_scheme["type"] == "aws-s3":
-        raise ValueError("Only S3 buckets are currently supported")
+    if storage_scheme["type"] not in ("aws-s3", "gcs"):
+        raise ValueError("Only S3 and GCS buckets are currently supported")
 
     bucket = storage_scheme["bucket"]
-    region = storage_scheme["region"]
     anonymous = storage_scheme.get("anonymous", False)
-    prefix = asset.href.split(f"{bucket}/")[1]
+    prefix = asset.href.split(f"{bucket}/", 1)[1]
 
-    storage = icechunk.s3_storage(
-        bucket=bucket,
-        prefix=prefix,
-        region=region,
-        anonymous=anonymous,
-        from_env=not anonymous,
-    )
+    if storage_scheme["type"] == "aws-s3":
+        region = storage_scheme["region"]
+        storage = icechunk.s3_storage(
+            bucket=bucket,
+            prefix=prefix,
+            region=region,
+            anonymous=anonymous,
+            from_env=not anonymous,
+        )
+    elif storage_scheme["type"] == "gcs":
+        storage = icechunk.gcs_storage(
+            bucket=bucket,
+            prefix=prefix,
+            anonymous=anonymous,
+            from_env=not anonymous,
+        )
 
     if "virtual" in asset.roles:
         config, virtual_credentials = construct_virtual_containers_config(owner, asset)
@@ -101,7 +109,13 @@ def read_icechunk(asset: pystac.Asset) -> xr.Dataset:
     repo = icechunk.Repository.open(storage=storage, **repo_kwargs)
 
     # --- Open icechunk session at a particular branch/tag/snapshot
-    if version := asset.extra_fields.get("version"):
+    if branch := asset.extra_fields.get("icechunk:branch"):
+        session_kwargs = {"branch": branch}
+    elif tag := asset.extra_fields.get("icechunk:tag"):
+        session_kwargs = {"tag": tag}
+    elif snapshot_id := asset.extra_fields.get("icechunk:snapshot_id"):
+        session_kwargs = {"snapshot_id": snapshot_id}
+    elif version := asset.extra_fields.get("version"):
         if version in repo.list_branches():
             session_kwargs = {"branch": version}
         elif version in repo.list_tags():
@@ -113,4 +127,9 @@ def read_icechunk(asset: pystac.Asset) -> xr.Dataset:
 
     session = repo.readonly_session(**session_kwargs)
 
-    return xr.open_zarr(session.store, zarr_format=3, consolidated=False)
+    open_kwargs = asset.extra_fields.get("xarray:open_kwargs", {})
+    zarr_kwargs = {
+        "consolidated": asset.extra_fields.get("zarr:consolidated", False),
+        "zarr_format": asset.extra_fields.get("zarr:zarr_format", 3),
+    }
+    return xr.open_zarr(session.store, **{**zarr_kwargs, **open_kwargs})
