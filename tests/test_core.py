@@ -139,3 +139,15 @@ def test_to_xarray_virtual_icechunk_item_gcs(virtual_icechunk_item_gcs):
     asset = next(iter(assets.values()))
 
     to_xarray(asset)
+
+
+@requires_icechunk
+def test_to_xarray_icechunk_respects_chunks_kwarg(virtual_icechunk_item):
+    assets = virtual_icechunk_item.get_assets(role="latest-version")
+    asset = next(iter(assets.values()))
+
+    ds = to_xarray(asset)
+    assert all(da.chunks is None for da in ds.data_vars.values())
+
+    ds = to_xarray(asset, chunks={})
+    assert all(da.chunks is not None for da in ds.data_vars.values())

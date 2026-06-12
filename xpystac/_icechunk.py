@@ -51,7 +51,7 @@ def construct_virtual_containers_config(
     return config, virtual_credentials
 
 
-def read_icechunk(asset: pystac.Asset) -> xr.Dataset:
+def read_icechunk(asset: pystac.Asset, **kwargs) -> xr.Dataset:
     """Read a icechunk asset
 
     The asset's parent must contain:
@@ -59,6 +59,9 @@ def read_icechunk(asset: pystac.Asset) -> xr.Dataset:
 
     For virtual assets the parent must contain:
      * another asset that matches the key in the primary asset's ["vrt:hrefs"] list
+
+    Extra kwargs are passed to ``xarray.open_dataset`` and take precedence over
+    the asset's ``xarray:open_kwargs``.
     """
     # --- Get storage schemes off the parent
     owner = asset.owner
@@ -132,4 +135,6 @@ def read_icechunk(asset: pystac.Asset) -> xr.Dataset:
         "consolidated": asset.extra_fields.get("zarr:consolidated", False),
         "zarr_format": asset.extra_fields.get("zarr:zarr_format", 3),
     }
-    return xr.open_zarr(session.store, **{**zarr_kwargs, **open_kwargs})
+    return xr.open_dataset(
+        session.store, engine="zarr", **{**zarr_kwargs, **open_kwargs, **kwargs}
+    )
