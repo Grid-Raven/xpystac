@@ -3,6 +3,7 @@ import warnings
 import icechunk
 import pystac
 import xarray as xr
+from xarray.backends import ZarrBackendEntrypoint
 
 warnings.filterwarnings(
     "ignore",
@@ -51,7 +52,7 @@ def construct_virtual_containers_config(
     return config, virtual_credentials
 
 
-def read_icechunk(asset: pystac.Asset) -> xr.Dataset:
+def read_icechunk(asset: pystac.Asset, **kwargs) -> xr.Dataset:
     """Read a icechunk asset
 
     The asset's parent must contain:
@@ -132,4 +133,7 @@ def read_icechunk(asset: pystac.Asset) -> xr.Dataset:
         "consolidated": asset.extra_fields.get("zarr:consolidated", False),
         "zarr_format": asset.extra_fields.get("zarr:zarr_format", 3),
     }
-    return xr.open_zarr(session.store, **{**zarr_kwargs, **open_kwargs})
+    return ZarrBackendEntrypoint().open_dataset(
+        session.store,
+        **{**zarr_kwargs, **open_kwargs, **kwargs},
+    )
